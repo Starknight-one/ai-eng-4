@@ -6,32 +6,22 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Starting Natural Language SQL Interface...${NC}"
+echo -e "${BLUE}Starting Task Tracker...${NC}"
 
 # Get the script's directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
 
-# Check if .env exists in server directory
-if [ ! -f "$PROJECT_ROOT/app/server/.env" ]; then
-    echo -e "${RED}Warning: No .env file found in app/server/.${NC}"
-    echo "Please:"
-    echo "  1. cd app/server"
-    echo "  2. cp .env.sample .env"
-    echo "  3. Edit .env and add your API keys"
-    exit 1
-fi
-
 # Function to cleanup on exit
 cleanup() {
     echo -e "\n${BLUE}Shutting down services...${NC}"
-    
+
     # Kill all child processes
     jobs -p | xargs -r kill 2>/dev/null
-    
+
     # Wait for processes to terminate
     wait
-    
+
     echo -e "${GREEN}Services stopped successfully.${NC}"
     exit 0
 }
@@ -39,10 +29,23 @@ cleanup() {
 # Trap EXIT, INT, and TERM signals
 trap cleanup EXIT INT TERM
 
+# Check if node_modules exists
+if [ ! -d "$PROJECT_ROOT/app/server/node_modules" ]; then
+    echo -e "${RED}Server dependencies not installed!${NC}"
+    echo "Installing server dependencies..."
+    cd "$PROJECT_ROOT/app/server" && npm install
+fi
+
+if [ ! -d "$PROJECT_ROOT/app/client/node_modules" ]; then
+    echo -e "${RED}Client dependencies not installed!${NC}"
+    echo "Installing client dependencies..."
+    cd "$PROJECT_ROOT/app/client" && npm install
+fi
+
 # Start backend
 echo -e "${GREEN}Starting backend server...${NC}"
 cd "$PROJECT_ROOT/app/server"
-uv run python server.py &
+npm run dev &
 BACKEND_PID=$!
 
 # Wait for backend to start
@@ -70,10 +73,9 @@ if ! kill -0 $FRONTEND_PID 2>/dev/null; then
     exit 1
 fi
 
-echo -e "${GREEN}✓ Services started successfully!${NC}"
-echo -e "${BLUE}Frontend: http://localhost:5173${NC}"
-echo -e "${BLUE}Backend:  http://localhost:8000${NC}"
-echo -e "${BLUE}API Docs: http://localhost:8000/docs${NC}"
+echo -e "${GREEN}Services started successfully!${NC}"
+echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
+echo -e "${BLUE}Backend:  http://localhost:3001${NC}"
 echo ""
 echo "Press Ctrl+C to stop all services..."
 
