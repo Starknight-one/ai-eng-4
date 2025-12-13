@@ -7,7 +7,7 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== Natural Language SQL Interface Shutdown ===${NC}\n"
+echo -e "${BLUE}=== Task Tracker Shutdown ===${NC}\n"
 
 # Функция для остановки процесса
 stop_process() {
@@ -49,28 +49,21 @@ stop_process "Server" ".pids/server.pid"
 # Остановка client
 stop_process "Client" ".pids/client.pid"
 
-# Дополнительная проверка: убиваем все процессы на портах 8000, 5173, и 8001
-echo -e "\n${YELLOW}Checking for processes on ports 8000, 5173, and 8001...${NC}"
+# Дополнительная проверка: убиваем все процессы на портах 3000 и 3001
+echo -e "\n${YELLOW}Checking for processes on ports 3000 and 3001...${NC}"
 
-# Проверка порта 8000 (server/backend)
-SERVER_PORT_PID=$(lsof -ti:8000)
+# Проверка порта 3001 (server/backend)
+SERVER_PORT_PID=$(lsof -ti:3001)
 if [ ! -z "$SERVER_PORT_PID" ]; then
-    echo -e "${YELLOW}Found process on port 8000 (PID: ${SERVER_PORT_PID}), killing...${NC}"
+    echo -e "${YELLOW}Found process on port 3001 (PID: ${SERVER_PORT_PID}), killing...${NC}"
     kill -9 $SERVER_PORT_PID 2>/dev/null
 fi
 
-# Проверка порта 5173 (client/frontend Vite)
-CLIENT_PORT_PID=$(lsof -ti:5173)
+# Проверка порта 3000 (client/frontend)
+CLIENT_PORT_PID=$(lsof -ti:3000)
 if [ ! -z "$CLIENT_PORT_PID" ]; then
-    echo -e "${YELLOW}Found process on port 5173 (PID: ${CLIENT_PORT_PID}), killing...${NC}"
+    echo -e "${YELLOW}Found process on port 3000 (PID: ${CLIENT_PORT_PID}), killing...${NC}"
     kill -9 $CLIENT_PORT_PID 2>/dev/null
-fi
-
-# Проверка порта 8001 (webhook server)
-WEBHOOK_PORT_PID=$(lsof -ti:8001)
-if [ ! -z "$WEBHOOK_PORT_PID" ]; then
-    echo -e "${YELLOW}Found process on port 8001 (PID: ${WEBHOOK_PORT_PID}), killing...${NC}"
-    kill -9 $WEBHOOK_PORT_PID 2>/dev/null
 fi
 
 echo -e "\n${GREEN}=== Shutdown complete ===${NC}"

@@ -49,7 +49,7 @@ IMPORTANT: Execute every step in order, top to bottom.
 Execute every command to validate the chore is complete with zero regressions.
 
 <list commands you'll use to validate with 100% confidence the chore is complete with zero regressions. every command must execute without errors so be specific about what you want to run to validate the chore is complete with zero regressions. Don't validate with curl commands.>
-- `cd app/server && uv run pytest` - Run server tests to validate the chore is complete with zero regressions
+- `cd app/server && npm test` - Run server tests to validate the chore is complete with zero regressions
 
 ## Notes
 <optionally list any additional notes or context that are relevant to the chore that will be helpful to the developer>

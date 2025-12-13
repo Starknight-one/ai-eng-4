@@ -13,7 +13,7 @@ Create a new plan in specs/*.md to implement the `Feature` using the exact speci
 - Use your reasoning model: THINK HARD about the feature requirements, design, and implementation approach.
 - Follow existing patterns and conventions in the codebase. Don't reinvent the wheel.
 - Design for extensibility and maintainability.
-- If you need a new library, use `uv add` and be sure to report it in the `Notes` section of the `Plan Format`.
+- If you need a new library, use `npm install` and be sure to report it in the `Notes` section of the `Plan Format`.
 - Respect requested files in the `Relevant Files` section.
 - Start your research by reading the `README.md` file.
 
@@ -84,7 +84,7 @@ IMPORTANT: Execute every step in order, top to bottom.
 Execute every command to validate the feature works correctly with zero regressions.
 
 <list commands you'll use to validate with 100% confidence the feature is implemented correctly with zero regressions. every command must execute without errors so be specific about what you want to run to validate the feature works as expected. Include commands to test the feature end-to-end.>
-- `cd app/server && uv run pytest` - Run server tests to validate the feature works with zero regressions
+- `cd app/server && npm test` - Run server tests to validate the feature works with zero regressions
 
 ## Notes
 <optionally list any additional notes, future considerations, or context that are relevant to the feature that will be helpful to the developer>

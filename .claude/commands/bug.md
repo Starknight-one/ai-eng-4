@@ -15,7 +15,7 @@ Create a new plan in specs/*.md to resolve the `Bug` using the exact specified m
 - IMPORTANT: Be surgical with your bug fix, solve the bug at hand and don't fall off track.
 - IMPORTANT: We want the minimal number of changes that will fix and address the bug.
 - Don't use decorators. Keep it simple.
-- If you need a new library, use `uv add` and be sure to report it in the `Notes` section of the `Plan Format`.
+- If you need a new library, use `npm install` and be sure to report it in the `Notes` section of the `Plan Format`.
 - Respect requested files in the `Relevant Files` section.
 - Start your research by reading the `README.md` file.
 
@@ -63,7 +63,7 @@ IMPORTANT: Execute every step in order, top to bottom.
 Execute every command to validate the bug is fixed with zero regressions.
 
 <list commands you'll use to validate with 100% confidence the bug is fixed with zero regressions. every command must execute without errors so be specific about what you want to run to validate the bug is fixed with zero regressions. Include commands to reproduce the bug before and after the fix.>
-- `cd app/server && uv run pytest` - Run server tests to validate the bug is fixed with zero regressions
+- `cd app/server && npm test` - Run server tests to validate the bug is fixed with zero regressions
 
 ## Notes
 <optionally list any additional notes or context that are relevant to the bug that will be helpful to the developer>
