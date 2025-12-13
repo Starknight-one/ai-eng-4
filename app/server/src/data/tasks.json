@@ -1,0 +1,103 @@
+[
+  {
+    "id": "1",
+    "title": "Setup project structure",
+    "description": "Create backend structure with Express and TypeScript",
+    "completed": true,
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-01T10:30:00Z",
+    "priority": "high",
+    "dod": [
+      {
+        "id": "1",
+        "text": "Код прошел code review",
+        "completed": true
+      },
+      {
+        "id": "2",
+        "text": "Написаны unit тесты",
+        "completed": true
+      },
+      {
+        "id": "3",
+        "text": "Обновлена документация",
+        "completed": true
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Create API endpoints",
+    "description": "Implement CRUD operations for tasks",
+    "completed": false,
+    "createdAt": "2024-01-01T11:00:00Z",
+    "updatedAt": "2024-01-01T11:00:00Z",
+    "priority": "high",
+    "dod": [
+      {
+        "id": "1",
+        "text": "Код прошел code review",
+        "completed": true
+      },
+      {
+        "id": "2",
+        "text": "Написаны unit тесты",
+        "completed": false
+      },
+      {
+        "id": "3",
+        "text": "Обновлена документация",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "title": "Add error handling",
+    "description": "Implement comprehensive error handling",
+    "completed": false,
+    "createdAt": "2024-01-01T12:00:00Z",
+    "updatedAt": "2024-01-01T12:00:00Z",
+    "priority": "medium",
+    "dod": [
+      {
+        "id": "1",
+        "text": "Код прошел code review",
+        "completed": false
+      },
+      {
+        "id": "2",
+        "text": "Написаны unit тесты",
+        "completed": false
+      },
+      {
+        "id": "3",
+        "text": "Обновлена документация",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": "b3d8e0bd-1ecc-4b51-b6f8-7b3140a9701e",
+    "title": "Create new &",
+    "description": "",
+    "completed": false,
+    "createdAt": "2025-12-13T14:03:44.104Z",
+    "updatedAt": "2025-12-13T14:03:44.104Z"
+  },
+  {
+    "id": "9d4c0812-a52f-4f3f-be4f-f65b84de3e5c",
+    "title": "Test & Dev",
+    "completed": false,
+    "createdAt": "2025-12-13T14:07:38.668Z",
+    "updatedAt": "2025-12-13T14:07:38.668Z"
+  },
+  {
+    "id": "e1d65fed-5b2b-4c2f-8370-cd1960d6305f",
+    "title": "New &&&",
+    "description": "",
+    "completed": false,
+    "createdAt": "2025-12-13T14:09:44.196Z",
+    "updatedAt": "2025-12-13T14:09:44.197Z"
+  }
+]
