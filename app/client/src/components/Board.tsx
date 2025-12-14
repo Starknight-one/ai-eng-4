@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Column from './Column'
 import TaskDetailModal from './TaskDetailModal'
-import { Task, Column as ColumnType } from '../types/Task'
+import { Task, Column as ColumnType, TaskStatus } from '../types/Task'
 import './Board.css'
 
 interface BoardProps {
@@ -18,6 +18,32 @@ const COLUMNS: ColumnType[] = [
   { id: 'done', title: 'Done', color: '#10b981' },
 ]
 
+const STORAGE_KEY = 'taskTracker.visibleColumns'
+
+// Utility functions for localStorage operations
+const getVisibleColumnsFromStorage = (): Set<TaskStatus> => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      return new Set(parsed)
+    }
+  } catch (error) {
+    console.warn('Failed to load visible columns from localStorage:', error)
+  }
+  // Default: all columns visible
+  return new Set<TaskStatus>(['backlog', 'todo', 'in-progress', 'test', 'done'])
+}
+
+const saveVisibleColumnsToStorage = (visibleColumns: Set<TaskStatus>): void => {
+  try {
+    const array = Array.from(visibleColumns)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(array))
+  } catch (error) {
+    console.warn('Failed to save visible columns to localStorage:', error)
+  }
+}
+
 export default function Board({ tasks, onAddTask, onDeleteTask }: BoardProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [title, setTitle] = useState('')
@@ -25,6 +51,14 @@ export default function Board({ tasks, onAddTask, onDeleteTask }: BoardProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [visibleColumns, setVisibleColumns] = useState<Set<TaskStatus>>(() =>
+    getVisibleColumnsFromStorage()
+  )
+
+  // Persist visible columns to localStorage whenever they change
+  useEffect(() => {
+    saveVisibleColumnsToStorage(visibleColumns)
+  }, [visibleColumns])
 
   const handleAddTask = () => {
     if (title.trim()) {
@@ -53,6 +87,24 @@ export default function Board({ tasks, onAddTask, onDeleteTask }: BoardProps) {
     setSelectedTask(null)
   }
 
+  const handleToggleColumn = (columnId: TaskStatus) => {
+    setVisibleColumns((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(columnId)) {
+        // Prevent hiding all columns - require at least one visible
+        if (newSet.size > 1) {
+          newSet.delete(columnId)
+        }
+      } else {
+        newSet.add(columnId)
+      }
+      return newSet
+    })
+  }
+
+  const visibleColumnsArray = COLUMNS.filter((col) => visibleColumns.has(col.id))
+  const hiddenCount = COLUMNS.length - visibleColumns.size
+
   return (
     <div className="board">
       <div className="board-actions">
@@ -74,6 +126,28 @@ export default function Board({ tasks, onAddTask, onDeleteTask }: BoardProps) {
               ×
             </button>
           )}
+        </div>
+        <div className="column-filters">
+          <div className="column-filters-label">
+            Columns {hiddenCount > 0 && <span className="hidden-count">({hiddenCount} hidden)</span>}
+          </div>
+          <div className="column-filter-toggles">
+            {COLUMNS.map((column) => (
+              <button
+                key={column.id}
+                className={`column-filter-toggle ${visibleColumns.has(column.id) ? 'active' : ''}`}
+                onClick={() => handleToggleColumn(column.id)}
+                style={{
+                  '--column-color': column.color,
+                } as React.CSSProperties}
+                aria-label={`${visibleColumns.has(column.id) ? 'Hide' : 'Show'} ${column.title} column`}
+                aria-pressed={visibleColumns.has(column.id)}
+              >
+                <span className="filter-indicator" style={{ backgroundColor: column.color }} />
+                {column.title}
+              </button>
+            ))}
+          </div>
         </div>
         {!showAddForm ? (
           <button
@@ -121,7 +195,7 @@ export default function Board({ tasks, onAddTask, onDeleteTask }: BoardProps) {
       </div>
 
       <div className="columns-container">
-        {COLUMNS.map((column) => (
+        {visibleColumnsArray.map((column) => (
           <Column
             key={column.id}
             column={column}

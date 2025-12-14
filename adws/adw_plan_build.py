@@ -142,10 +142,19 @@ def classify_issue(
     if issue_command == "0":
         return None, f"No command selected: {issue_response.output}"
 
-    if issue_command not in ["/chore", "/bug", "/feature"]:
-        return None, f"Invalid command selected: {issue_response.output}"
+    valid_commands = ["/chore", "/bug", "/feature"]
 
-    return issue_command, None  # type: ignore
+    # Direct match
+    if issue_command in valid_commands:
+        return issue_command, None  # type: ignore
+
+    # Fallback: extract command from response if model added extra text
+    for cmd in valid_commands:
+        if cmd in issue_command:
+            logger.debug(f"Extracted command {cmd} from response: {issue_command}")
+            return cmd, None  # type: ignore
+
+    return None, f"Invalid command selected: {issue_response.output}"
 
 
 def build_plan(
