@@ -10,7 +10,10 @@ ADW automates software development by integrating GitHub issues with Claude Code
 export GITHUB_REPO_URL="https://github.com/owner/repository"
 export ANTHROPIC_API_KEY="sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 export CLAUDE_CODE_PATH="/path/to/claude"  # Optional, defaults to "claude"
+export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR="true"  # Optional, maintains working directory in bash commands
 export GITHUB_PAT="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # Optional, only if using different account than 'gh auth login'
+export E2B_API_KEY="your-e2b-api-key"  # Optional, for sandbox environments
+export CLOUDFLARED_TUNNEL_TOKEN="your-tunnel-token"  # Optional, for webhook exposure
 ```
 
 ### 2. Install Prerequisites
@@ -181,7 +184,7 @@ Specialized agents execute discrete tasks through Claude Code CLI:
 
 ### Workflow Phases and Data Flow
 
-The complete ADW workflow follows this sequence (adw_plan_build.py:367-542):
+The complete ADW workflow follows this sequence (adw_plan_build.py:367-545):
 
 ```
 GitHub Issue → ADW Workflow → Pull Request
@@ -325,6 +328,8 @@ AgentTemplateRequest → execute_template() → AgentPromptResponse
 5. **Environment Configuration** (agent.py:84-129)
    - Filters environment to only required variables
    - Includes: ANTHROPIC_API_KEY, PATH, HOME, USER, SHELL, TERM
+   - Includes: CLAUDE_CODE_PATH, CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR
+   - Optional: E2B_API_KEY for sandbox environments
    - Conditionally adds GITHUB_PAT as GH_TOKEN if provided
    - Omits all other environment variables for security
 
@@ -490,6 +495,13 @@ class GitHubLabel(BaseModel):
     color: str
     description: Optional[str]
 
+class GitHubMilestone(BaseModel):
+    id: str
+    number: int
+    title: str
+    description: Optional[str]
+    state: str
+
 class GitHubComment(BaseModel):
     id: str
     author: GitHubUser
@@ -505,11 +517,20 @@ class GitHubIssue(BaseModel):
     author: GitHubUser
     assignees: List[GitHubUser]
     labels: List[GitHubLabel]
+    milestone: Optional[GitHubMilestone]
     comments: List[GitHubComment]
     created_at: datetime
     updated_at: datetime
     closed_at: Optional[datetime]
     url: str
+
+class GitHubIssueListItem(BaseModel):
+    number: int
+    title: str
+    body: str
+    labels: List[GitHubLabel]
+    created_at: datetime
+    updated_at: datetime
 ```
 
 These models parse GitHub CLI JSON output and provide:
@@ -590,6 +611,14 @@ def make_adw_id() -> str:
 ```
 
 Example: `a1b2c3d4`
+
+**Logger Retrieval** (utils.py:70-79)
+
+Retrieve an existing logger by ADW ID:
+```python
+def get_logger(adw_id: str) -> logging.Logger:
+    return logging.getLogger(f"adw_{adw_id}")
+```
 
 **ADW ID Appears In**:
 - Issue comments: `a1b2c3d4_ops: ✅ Starting ADW workflow`
@@ -708,10 +737,11 @@ uv run adws/health_check.py [issue_number]
 
 4. **Claude Code CLI Functionality** (health_check.py:131-220)
    - Tests CLI is installed and accessible
-   - Executes test prompt: "What is 2+2?"
+   - Executes test prompt: "What is 2+2?" using claude-3-5-haiku-20241022 model
    - Validates JSONL output parsing
    - Confirms API communication works
    - Reports execution success and response
+   - Uses 30-second timeout for test execution
 
 **Health Check Result Structure**
 
@@ -799,6 +829,21 @@ uv run trigger_webhook.py
 
 ## Troubleshooting
 
+### Health Check First
+Before troubleshooting specific issues, run the comprehensive health check:
+```bash
+uv run health_check.py
+
+# Or with issue number to post results to GitHub
+uv run health_check.py 123
+```
+
+The health check validates:
+- All required environment variables
+- Git repository configuration
+- GitHub CLI installation and authentication
+- Claude Code CLI functionality with test prompt
+
 ### Environment Issues
 ```bash
 # Check required variables
@@ -819,21 +864,51 @@ which claude  # Check if installed
 # Reinstall from https://docs.anthropic.com/en/docs/claude-code
 ```
 
+**"Missing ANTHROPIC_API_KEY"**
+```bash
+# Set in .env file or export
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
 **"Missing GITHUB_PAT"** (Optional - only needed if using different account than 'gh auth login')
 ```bash
 export GITHUB_PAT=$(gh auth token)
 ```
 
+**"GitHub CLI not authenticated"**
+```bash
+gh auth login
+# Or set GITHUB_PAT if using different account
+```
+
 **"Agent execution failed"**
 ```bash
-# Check agent output
-cat agents/*/sdlc_planner/raw_output.jsonl | tail -1 | jq .
+# Check agent output for errors
+cat agents/{adw_id}/sdlc_planner/raw_output.jsonl | tail -1 | jq .
+
+# View execution log
+cat agents/{adw_id}/adw_plan_build/execution.log
+
+# Check saved prompts
+cat agents/{adw_id}/{agent_name}/prompts/*.txt
+```
+
+**"Health check timed out"**
+```bash
+# The Claude Code test uses a 30-second timeout
+# If it times out, check:
+# 1. ANTHROPIC_API_KEY is valid
+# 2. Network connectivity to Anthropic API
+# 3. No rate limiting issues
 ```
 
 ### Debug Mode
 ```bash
-export ADW_DEBUG=true
-uv run adw_plan_build.py 123  # Verbose output
+# Enable detailed logging (DEBUG level to file, INFO to console)
+# Logs automatically saved to agents/{adw_id}/adw_plan_build/execution.log
+
+# View logs in real-time
+tail -f agents/{adw_id}/adw_plan_build/execution.log
 ```
 
 ## Configuration
@@ -845,9 +920,17 @@ Each workflow run gets a unique 8-character ID (e.g., `a1b2c3d4`) that appears i
 - Git commits and PRs
 
 ### Model Selection
-Edit `agent.py` line 129 to change model:
-- `model="sonnet"` - Faster, lower cost (default)
-- `model="opus"` - Better for complex tasks
+Configure model in AgentTemplateRequest (data_types.py:122-129):
+- `model="sonnet"` - Faster, lower cost (default for most agents)
+- `model="opus"` - More powerful for complex tasks
+
+Default model settings in adw_plan_build.py:
+- Issue classifier: sonnet (line 124)
+- Planner: sonnet (line 169)
+- Implementor: sonnet (line 225)
+- Branch generator: sonnet (line 257)
+- Commit message generator: sonnet (line 290)
+- PR creator: sonnet (line 317)
 
 ### Output Structure
 ```
